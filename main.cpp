@@ -499,6 +499,7 @@ void displayed(){
         for(int x = 0;x<Block_wid;x++)
         {
             if(MAZA[x][y] == WAY) {  //绘制路线
+                Sleep(5);
                 drawpixel(x, y, theway);
             }
         }
