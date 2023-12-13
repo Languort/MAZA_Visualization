@@ -7,6 +7,56 @@
 
 using namespace std;
 
+//函数声明
+
+void drawpixel(int x, int y, COLORREF RGB);//在x，y位置画颜色为RGB的方格
+void initializeMaza();  //初始化迷宫生成
+void display();//刷新屏幕
+void prim_main();//prim主循环
+void through(int x, int y);//将x,y与它四周一个随机已经变成路的路点打通
+void join(int x, int y);//将x,y四周是墙壁的路点加入待选列表
+void displaying();//BFS绘制寻路路线
+void displayed();//BFS绘制寻路路线
+void displayway();//DFS绘制寻路路线
+
+
+/*
+ *
+----迷宫 自动生成（Prim）与自动寻路(BFS & DFS）可视化程序----
+
+目录
+1. 初始化变量
+    1.1 初始化可视化变量
+    1.2 初始化迷宫元素变量
+2. Prim算法生成迷宫
+    2.1 初始化Prim算法主函数
+    2.2 Prim算法
+3. DFS深度优先算法寻路
+    3.1 建立栈Stack
+    3.2 初始化DFS变量
+    3.3 DFS寻路函数
+    3.4 初始化DFS算法主函数
+4. BFS广度优先算法寻路
+    4.1 建立队列Queue
+    4.2 初始化BFS变量
+    4.3 BFS寻路函数
+    4.4 初始化BFS算法主函数
+5. 可视化
+    5.1 初始化
+    5.2 迷宫生成可视化
+    5.3 BFS迷宫寻路可视化
+    5.4 DFS迷宫寻路可视化
+6. 随机生成可视化迷宫
+7. 主函数main
+
+-------------------------------------------------------
+ *
+*/
+
+
+//  1. 初始化变量
+
+//  1.1 初始化可视化变量
 
 //标准量定义
 #define WIDTH 510  //画面宽度
@@ -15,15 +65,10 @@ using namespace std;
 #define ROAD 0
 #define WALL 1
 #define WAIT 2
+
 #define WAY 3
 #define PREWAY 4
 #define THEWAY 5
-
-
-//迷宫大小定义
-const int Block_wid = WIDTH / Block_xy; // x轴方格个数
-const int Block_hei = HEIGHT / Block_xy; // y轴方格个数
-
 
 //颜色定义
 #define air COLORREF RGB(50,50,50) //空气颜色
@@ -33,8 +78,13 @@ const int Block_hei = HEIGHT / Block_xy; // y轴方格个数
 #define preway COLORREF RGB(0,100,0) //预选路颜色
 #define theway COLORREF RGB(0,255,0)// 寻路路径颜色
 
+//  1.2 初始化迷宫元素变量
 
-//定义迷宫格子
+//迷宫大小定义
+const int Block_wid = WIDTH / Block_xy; // x轴方格个数
+const int Block_hei = HEIGHT / Block_xy; // y轴方格个数
+
+//定义迷宫方格结构
 struct block{
 public:
     int x;
@@ -45,51 +95,16 @@ public:
     }
 };
 
-
 //定义二维数组迷宫
 int MAZA[Block_wid][Block_hei];
 
-//未学 动态数组
+//动态数组
 vector<block*> openlist;//待选列表
 vector<block*> list;
 
-//函数声明
-void clearscreen(COLORREF RGB);//清空地图为RGB颜色(带有网格)
-void drawpixel(int x, int y, COLORREF RGB);//在x，y位置画颜色为RGB的方格
-void initializeMaza();  //初始化迷宫生成
-void join(int x, int y);//将x,y四周是墙壁的路点加入待选列表
-void display();//刷新屏幕
-void prim_main();//prim主循环
-void through(int x, int y);//将x,y与它四周一个随机已经变成路的路点打通
-void displaying();//绘制寻路路线
-void displayed();
-void displayway();
+//  2.  Prim算法生成迷宫
 
-/*********/
-
-/*
- *
---------迷宫 自动生成与自动寻路可视化程序--------
-
- 目录
- 1.0 初始化变量
-    1.1 初始化地图变量
- 2.0 迷宫生成
-    2.1 Prim算法生成迷宫
- 3.0 迷宫寻路
-    3.1 DFS算法寻路
-
- 4.0 可视化
-    4.1 初始化
-    4.2 迷宫生成可视化
-    4.3 迷宫寻路可视化
-
-----------------------------------------------
-*/
-
-
-//2.1迷宫生成初始化
-
+//  2.1 初始化Prim算法主函数
 void initializeMaza()
 {
     openlist.clear();
@@ -106,8 +121,7 @@ void initializeMaza()
     prim_main();
 }
 
-
-
+//  2.2 Prim算法
 void prim_main() {
     while (openlist.size() > 0) { //while (!openlist.empty()) { 存疑
         //从openlist中选一个路点
@@ -129,7 +143,7 @@ void prim_main() {
     EndBatchDraw(); //关闭批量绘图
 }
 
-
+// 将四周墙壁的路点加入待选列表
 void through(int x,int y){
     list.clear();
     if (y - 2 >= 0 && MAZA[x][y - 2] == ROAD) {
@@ -161,7 +175,7 @@ void through(int x,int y){
     }
 }
 
-
+// 将四周是墙壁的路点加入待选列表
 void join(int x , int y) {
     // 上面的格子
     if (y - 2 >= 0 && MAZA[x][y - 2] == WALL) {
@@ -190,21 +204,18 @@ void join(int x , int y) {
     }
 }
 
-// 3. DFS深度优先算法寻路
+//  3.DFS深度优先算法寻路
 
-//3.1 建立栈
-//3.1.1 定义Node
-typedef struct Node{
+//  3.1 建立栈Stack
+typedef struct Node{    //定义栈节点
     int x;
     int y;
     struct Node *next;
 }Node;
 
-//3.1.2 定义Stack
 typedef Node* Stack;
 
-//3.1.3 建立栈函数
-Stack createEmptyStack(){
+Stack createEmptyStack(){   //创建空栈
     Stack p =(Stack)malloc(sizeof(Node)); //为空栈申请空间;
     if(p){
         p->next = NULL;
@@ -212,14 +223,13 @@ Stack createEmptyStack(){
     }
 }
 
-//3.1.4 元素入栈函数
-void push(int x,int y,Stack s){
+void push(int x,int y,Stack s){ //入栈
     Stack p =(Stack)malloc(sizeof(Node));
     if(p){ //if 申请成功则将元素压入栈中
         p->x = x;
         p->y = y;
         if(!s->next)
-            p->next = NULL;     //？
+            p->next = NULL;
         else p->next = s->next; //否则将p插入头节点之后
         s->next = p;
     }
@@ -227,8 +237,7 @@ void push(int x,int y,Stack s){
     //      cout<<"申请空间失败"<<endl;
 }
 
-//3.1.5 元素出栈函数
-void pop(Stack s){
+void pop(Stack s){  //出栈
     Stack p;
     p = s->next;
     if(p->next){
@@ -238,29 +247,27 @@ void pop(Stack s){
     else return;
 }
 
-//3.1.6 获取栈顶元素函数
-Node top(Stack s){
+Node top(Stack s){  //取栈顶元素
     Node t;
     //判断栈是否为空 不为空则返回
     t=*(s->next);
     return t;
 }
 
-//3.1.7 检测栈是否为空（未使用）
-int isEmpty(Stack s) {
+int isEmpty(Stack s) {  //判断栈是否为空
     //为空则返回1，不为空返回0
     if (s->next == NULL) return 1;
     else return 0;
 }
 
-//3.2 DFS算法
-//3.2.1 DFS初始化
+//  3.2 初始化DFS变量
+//  定义方向数组
 int direction[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};//定义一个数组存四个方向操作数
 int MIN=100;//用于记录最小路径
 int flag=0;//用于记录是否寻路到终点
 
 
-//3.2.2 DFS寻路函数
+//  3.3 DFS寻路函数
 void MazaPathDFS(int x,int y,int endx,int endy,int Block_wid,int Block_hei, Stack s){
     int newx,newy,i;
     //对四个方向进行寻路
@@ -293,41 +300,39 @@ void MazaPathDFS(int x,int y,int endx,int endy,int Block_wid,int Block_hei, Stac
     pop(s);
 }
 
-
-//5. DFS部分主函数
+//  3.4 初始化DFS算法主函数
 void initializePathDFS(){ //初始化绘制路径
-//5.1 初始化 起点 终点
+//  初始化 起点 终点
     int xbegin  = 0;
     int ybegin  = 0;
     int xend = 50;
     int yend = 50;
-//5.2 建立栈
+//  建立栈
     Stack s = createEmptyStack();
-//5.3 执行DFS分析
+//  执行DFS分析
     MazaPathDFS(xbegin,ybegin,xend,yend,Block_wid,Block_hei,s);
 }
 
+//  4. BFS广度优先算法寻路
 
-
-//BFS
-
-typedef struct {
+//4.1 建立队列Queue
+typedef struct {    //定义节点
     int row;
     int col;
 } Point;
 
-typedef struct {
+typedef struct {    //定义队列节点
     Point point;
     int distance;
 } QueueNode;
 
-typedef struct {
+typedef struct {    //定义队列
     QueueNode* array;
     int front;
     int rear;
 } Queue;
 
-Queue* createQueue(int size) {
+Queue* createQueue(int size) {  //创建队列
     Queue* queue = (Queue*)malloc(sizeof(Queue));
     queue->array = (QueueNode*)malloc(size * sizeof(QueueNode));
     queue->front = -1;
@@ -335,47 +340,47 @@ Queue* createQueue(int size) {
     return queue;
 }
 
-void enqueue(Queue* queue, Point point, int distance) {
+void enqueue(Queue* queue, Point point, int distance) { //入队
     QueueNode newNode;
     newNode.point = point;
     newNode.distance = distance;
 
-    if (queue->front == -1) {
-        queue->front = 0;
+    if (queue->front == -1) {   //当队列为空时
+        queue->front = 0;    //队首指向第一个元素
     }
 
-    queue->rear++;
-    queue->array[queue->rear] = newNode;
+    queue->rear++;  //队尾指向下一个元素
+    queue->array[queue->rear] = newNode;    //将新元素加入队列
 }
 
-QueueNode dequeue(Queue* queue) {
+QueueNode dequeue(Queue* queue) {   //出队
     QueueNode node = queue->array[queue->front];
 
-    if (queue->front == queue->rear) {
-        queue->front = -1;
-        queue->rear = -1;
+    if (queue->front == queue->rear) {  //当队列中只有一个元素时
+        queue->front = -1;  //队列头为空
+        queue->rear = -1;   //队列尾为空
     } else {
-        queue->front++;
+        queue->front++; //队列头指向下一个元素
     }
 
-    return node;
+    return node;    //返回出队元素
 }
 
-int isValid(int row, int col, int visited[Block_wid][Block_hei]) {
+//  4.2 初始化BFS变量
+
+int isValid(int row, int col, int visited[Block_wid][Block_hei]) {  //判断是否为有效路径
     return (row >= 0 && row < Block_wid && col >= 0 && col < Block_hei && !visited[row][col]);
 }
 
-void printShortestPath(Point source, Point destination, Point parent[Block_wid][Block_hei]) {
-    Point path[Block_wid * Block_hei];
+void printShortestPath(Point source, Point destination, Point parent[Block_wid][Block_hei]) {   //打印最短路径
+    Point path[Block_wid * Block_hei];  //建立路径数组
     int pathLength = 0;
 
-    Point current = destination;
-    while (!(current.row == source.row && current.col == source.col)) {
-        path[pathLength++] = current;
-        current = parent[current.row][current.col];
+    Point current = destination;    //将终点设为当前点
+    while (!(current.row == source.row && current.col == source.col)) {  //当当前点不为起点时
+        path[pathLength++] = current;   //将当前点加入路径数组
+        current = parent[current.row][current.col]; //将当前点设为父节点
     }
-
-//  绘制最短路径
     for (int i = pathLength - 1; i >= 0; i--) {
         int n;
         int m;
@@ -387,7 +392,9 @@ void printShortestPath(Point source, Point destination, Point parent[Block_wid][
 
 }
 
-void BFS(int maze[Block_wid][Block_hei], Point source, Point destination) {
+
+//  4.3 BFS寻路函数
+void MazaPathBFS(int maze[Block_wid][Block_hei], Point source, Point destination) {
     //建立遍历过数组
     int visited[Block_wid][Block_hei];
     //建立父节点便于回溯
@@ -399,18 +406,15 @@ void BFS(int maze[Block_wid][Block_hei], Point source, Point destination) {
             parent[i][j] = (Point){-1, -1};
         }
     }
-
     //建立队列
     Queue* queue = createQueue(Block_wid * Block_hei);
     //将起点加入队列
     enqueue(queue, source, 0);
     //将起点加入遍历数组
     visited[source.row][source.col] = 1;
-
     //建立横纵遍历数组
     int rowOffsets[] = {-1, 0, 1, 0};
     int colOffsets[] = {0, 1, 0, -1};
-
     //当队列不为空时
     while (queue->front != -1) {
         //取出队列中的第一个元素
@@ -429,7 +433,6 @@ void BFS(int maze[Block_wid][Block_hei], Point source, Point destination) {
         for (int i = 0; i < 4; i++) {
             int newRow = currentPoint.row + rowOffsets[i];
             int newCol = currentPoint.col + colOffsets[i];
-
             //当队列中的第一个元素的四周有路时
             if (isValid(newRow, newCol, visited) && maze[newRow][newCol] == 0) {
                 //将四周的路加入队列
@@ -444,12 +447,31 @@ void BFS(int maze[Block_wid][Block_hei], Point source, Point destination) {
             }
         }
     }
-
     free(queue->array);
     free(queue);
 }
 
+//  4.4 初始化BFS算法主函数
+void initializePathBFS(){ //初始化绘制路径
 
+    int xbegin  = 0;
+    int ybegin  = 0;
+    int xend = 50;
+    int yend = 50;
+
+    Point start = {0, 0};
+    Point end = {50, 50};
+//    Queue q = createEmptyQueue();
+
+    MazaPathBFS(MAZA, start, end);
+}
+
+
+//  5. 可视化
+
+//  5.1 初始化
+
+//像素格绘制
 void drawpixel(int x,int y,COLORREF RGB)
 {
     setfillcolor(RGB);
@@ -458,6 +480,7 @@ void drawpixel(int x,int y,COLORREF RGB)
 }
 
 
+//  5.2 迷宫生成可视化
 void display(){ //绘制
 
     //绘制迷宫
@@ -480,6 +503,8 @@ void display(){ //绘制
     FlushBatchDraw();
 }
 
+
+//  5.3 BFS迷宫寻路可视化
 void displaying(){
     //绘制路径
     for(int y = 0; y < Block_hei ; y++){
@@ -507,6 +532,7 @@ void displayed(){
     FlushBatchDraw();
 }
 
+//  5.4 DFS迷宫寻路可视化
 void displayway(){
     //绘制路径
     for(int y = 0; y < Block_hei ; y++){
@@ -524,22 +550,9 @@ void displayway(){
 }
 
 
+//  6. 随机生成可视化迷宫
 
-void initializePathBFS(){ //初始化绘制路径
-
-    int xbegin  = 0;
-    int ybegin  = 0;
-    int xend = 50;
-    int yend = 50;
-
-    Point start = {0, 0};
-    Point end = {50, 50};
-//    Queue q = createEmptyQueue();
-
-    BFS(MAZA,start,end);
-
-}
-
+//建立随机迷宫主函数
 void createRandomMAZA()
 {
     srand((unsigned)time(NULL));//随机数种子
@@ -553,7 +566,6 @@ void createRandomMAZA()
 
 int main() {
 
-
     //随机生成第一个迷宫
     createRandomMAZA();
 
@@ -564,7 +576,7 @@ int main() {
 
     Sleep(500);
 
-    //随机生成第二个
+    //随机生成第二个迷宫
     createRandomMAZA();
 
     //BFS寻找路径主函数
@@ -572,7 +584,7 @@ int main() {
     getch();
     EndBatchDraw();
 
-
+    //关闭绘图窗口
     closegraph();
     return 0;
 
